@@ -2640,6 +2640,15 @@ export const dict: Record<I18nKey, string> = {
   'chat.messageBody.actions.savingImage': '画像を保存中...',
   'chat.messageBody.actions.saveAsImage': '画像として保存',
   'chat.messageBody.actions.saveAsPlan': '計画として保存',
+<<<<<<< HEAD
+  'chat.deepseekPanel.toggleTitle': 'Open DeepSeek chat',
+  'chat.deepseekPanel.closePanel': 'Close DeepSeek panel',
+  'chat.deepseekPanel.pin': 'Keep panel open',
+  'chat.deepseekPanel.unpin': 'Allow auto-close',
+  'chat.deepseekPanel.close': 'Close chat',
+  'chat.deepseekPanel.copyResponse': 'Copy response to builder',
+=======
+>>>>>>> 44f9b41ac5845f7d079f6c829806ef3f70e7f0a2
   'chat.messageBody.actions.construirCodigo': 'Build code',
   'chat.messageBody.actions.construindo': 'Building...',
   'chat.messageBody.actions.startNewSession': 'この回答から新しいセッションを開始',
