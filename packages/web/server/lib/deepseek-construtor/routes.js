@@ -104,7 +104,7 @@ export const registerDeepSeekConstrutorRoutes = (app) => {
     try {
       const text = String(req.body?.text ?? req.body?.texto ?? '').trim();
       if (!text) {
-        return res.status(400).json({ error: 'test é obrigatório' });
+        return res.status(400).json({ error: 'text é obrigatório' });
       }
       await mkdir(BRIDGE_DIR, { recursive: true });
       const entry = { text, ts: new Date().toISOString(), origin: req.ip ?? null };
