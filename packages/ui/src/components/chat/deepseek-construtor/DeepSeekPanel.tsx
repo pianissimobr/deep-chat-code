@@ -19,6 +19,8 @@ export function DeepSeekPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [input, setInput] = useState('');
+  const [promptInput, setPromptInput] = useState('');
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [statusText, setStatusText] = useState<string | null>(null);
   const [lastReceivedAt, setLastReceivedAt] = useState<string | null>(null);
   const [output, setOutput] = useState<string | null>(null);
@@ -173,7 +175,37 @@ export function DeepSeekPanel() {
     setInput('');
     setOutput(null);
     setStatusText(null);
+    setPromptInput('');
+    setSyncStatus(null);
   }, []);
+
+  const enviarPerguntaAoDeepSeek = useCallback(async () => {
+    const pergunta = promptInput.trim();
+    if (!pergunta) {
+      toast.warning('Escreva uma pergunta para enviar ao DeepSeek.');
+      return;
+    }
+    // 1. Tenta o servidor (caminho principal, funciona mesmo sem o userscript openchamber-bridge)
+    try {
+      const res = await fetch('/api/deepseek-construtor/enviar-pergunta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: pergunta }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      setSyncStatus('Pergunta enfileirada. Abra o DeepSeek em nova guia e ela será injetada automaticamente.');
+      setPromptInput('');
+      return;
+    } catch (e) {
+      // 2. Fallback: dispara evento para o userscript openchamber-bridge ou grava no localStorage
+      try {
+        localStorage.setItem('openchamber-deepseek-bridge:pending-prompt', JSON.stringify({ text: pergunta, ts: new Date().toISOString() }));
+      } catch {}
+      window.dispatchEvent(new CustomEvent('deepseek-enviar-pergunta', { detail: { text: pergunta } }));
+      setSyncStatus('Servidor indisponível. Pergunta guardada localmente para a ponte.');
+      setPromptInput('');
+    }
+  }, [promptInput]);
 
   const isBuilding = estadoStatus === 'executando' || estadoStatus === 'gerando-arvore';
 
@@ -254,6 +286,25 @@ export function DeepSeekPanel() {
               <Button type="button" variant="outline" size="sm" onClick={limpar}>
                 {t('chat.deepseekPanel.clear')}
               </Button>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-foreground">
+                Pergunta para o DeepSeek
+              </label>
+              <Textarea
+                value={promptInput}
+                onChange={(e) => setPromptInput(e.target.value)}
+                placeholder="Escreva aqui o que quer perguntar ao DeepSeek. O Tampermonkey injeta sozinho no chat aberto em outra aba."
+                className="mt-1 min-h-20 w-full text-xs"
+                disabled={isBuilding}
+              />
+              <div className="mt-2 flex gap-2">
+                <Button type="button" size="sm" onClick={() => void enviarPerguntaAoDeepSeek()} disabled={!promptInput.trim()}>
+                  Enviar ao DeepSeek
+                </Button>
+                {syncStatus && <p className="text-xs text-muted-foreground self-center">{syncStatus}</p>}
+              </div>
             </div>
 
             <div>

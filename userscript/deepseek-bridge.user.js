@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         DeepSeek to OpenChamber Bridge
 // @namespace    http://tampermonkey.net/
-// @version      2.0.0
-// @description  Roda em chat.deepseek.com: detecta a ultima resposta e envia para o painel do OpenChamber
+// @version      3.0.0
+// @description  Roda em chat.deepseek.com: injeta perguntas do OpenChamber no DeepSeek e envia respostas de volta
 // @author       local
 // @match        https://chat.deepseek.com/*
 // @connect      localhost
@@ -16,12 +16,12 @@
 (function () {
   'use strict';
 
-  const PANEL_PATHS = ['/api/deepseek-construtor/entregar-resposta'];
-
+  const API_BASE = 'http://localhost:3001/api/deepseek-construtor';
+  const DELIVER_PATH = '/entregar-resposta';
+  const POLL_PATH = '/ultima-pergunta';
   const CANDIDATES = ['localhost', '127.0.0.1'];
 
   // Seletores comuns de mensagens do DeepSeek (podem mudar).
-  // A estrategia: tentar varios seletores e, se nao achar, usar a ultima area de texto visivel.
   const MESSAGE_SELECTORS = [
     '[data-testid*="message"]',
     '[class*="message"]',
@@ -30,10 +30,54 @@
     'main div',
   ];
 
+  // Seletores para o input do DeepSeek.
+  const INPUT_SELECTORS = [
+    'textarea',
+    '[contenteditable="true"]',
+    'input[type="text"]',
+  ];
+
   function log(...args) {
     console.log('[deepseek-bridge]', ...args);
   }
 
+  function gmRequest(method, path, body, onload, onerror) {
+    if (typeof GM_xmlhttpRequest !== 'function') {
+      onerror(new Error('GM_xmlhttpRequest indisponivel'));
+      return;
+    }
+    let tentativas = 0;
+    const tentar = () => {
+      if (tentativas >= CANDIDATES.length) {
+        onerror(new Error('todos hosts falharam (GM_xmlhttpRequest)'));
+        return;
+      }
+      const host = CANDIDATES[tentativas++];
+      GM_xmlhttpRequest({
+        method,
+        url: `http://${host}:3001${API_BASE}${path}`,
+        headers: { 'Content-Type': 'application/json' },
+        data: body ? JSON.stringify(body) : null,
+        timeout: 8000,
+        onload: (res) => {
+          if (res.status >= 200 && res.status < 300) {
+            try {
+              onload(JSON.parse(res.responseText || '{}'));
+            } catch {
+              onload({});
+            }
+          } else {
+            tentar();
+          }
+        },
+        onerror: () => tentar(),
+        ontimeout: () => tentar(),
+      });
+    };
+    tentar();
+  }
+
+  // ---------- Direção DeepSeek -> OpenChamber ----------
   function getLastMessageText() {
     for (const sel of MESSAGE_SELECTORS) {
       const nodes = Array.from(document.querySelectorAll(sel)).filter((el) => {
@@ -42,7 +86,6 @@
         if (rect.width < 10 || rect.height < 10) return false;
         const text = (el.innerText || el.textContent || '').trim();
         if (text.length < 20) return false;
-        // Ignora inputs e o proprio botao
         if (el.closest('#deepseek-bridge-ui')) return false;
         return true;
       });
@@ -52,7 +95,6 @@
         if (text) return text;
       }
     }
-    // Fallback: ultima area longa de texto na pagina
     const paras = Array.from(document.querySelectorAll('p, pre, code, div')).filter((el) => {
       if (!(el instanceof HTMLElement)) return false;
       const text = (el.innerText || el.textContent || '').trim();
@@ -63,55 +105,22 @@
   }
 
   function enviarParaOpenChamber(texto) {
-    const payload = JSON.stringify({ text: texto });
-    const headers = { 'Content-Type': 'application/json' };
-
-    // 1) GM_xmlhttpRequest — funciona mesmo com CORS, se @connect estiver liberado.
-    if (typeof GM_xmlhttpRequest === 'function') {
-      let tentativas = 0;
-      const tentar = () => {
-        if (tentativas >= CANDIDATES.length) {
-          log('GM_xmlhttpRequest falhou em todos os hosts, tentando postMessage e clipboard');
-          enviarViaPostMessage(texto);
-          return;
-        }
-        const host = CANDIDATES[tentativas++];
-        GM_xmlhttpRequest({
-          method: 'POST',
-          url: `http://${host}:3001${PANEL_PATHS[0]}`,
-          headers,
-          data: payload,
-          timeout: 8000,
-          onload: (res) => {
-            if (res.status >= 200 && res.status < 300) {
-              log('Entrega com sucesso em', host);
-              toast('Resposta enviada para o OpenChamber', 'ok');
-            } else {
-              log('Falha em', host, res.status, res.responseText);
-              tentar();
-            }
-          },
-          onerror: (err) => {
-            log('Erro GM_xmlhttpRequest em', host, err);
-            tentar();
-          },
-          ontimeout: () => {
-            log('Timeout em', host);
-            tentar();
-          },
-        });
-      };
-      tentar();
-      return;
-    }
-
-    enviarViaPostMessage(texto);
+    gmRequest(
+      'POST',
+      DELIVER_PATH,
+      { text: texto },
+      () => {
+        log('Resposta entregue ao OpenChamber');
+        toast('Resposta enviada para o OpenChamber', 'ok');
+      },
+      (err) => {
+        log('GM_xmlhttpRequest falhou, tentando postMessage/clipboard', err);
+        enviarViaPostMessage(texto);
+      },
+    );
   }
 
   function enviarViaPostMessage(texto) {
-    // Fallback: tenta postMessage para opener (quando o DeepSeek foi aberto
-    // em nova guia a partir do painel do OpenChamber). O painel escuta
-    // `message` events com { tipo: 'deepseek-resposta', text }.
     try {
       if (window.opener && !window.opener.closed) {
         window.opener.postMessage({ tipo: 'deepseek-resposta', text: texto }, '*');
@@ -122,7 +131,6 @@
     } catch (e) {
       log('postMessage falhou', e);
     }
-    // 2) Grava no clipboard para cola manual no painel do OpenChamber.
     try {
       if (typeof GM_setClipboard === 'function') {
         GM_setClipboard(texto, { type: 'text', mimetype: 'text/plain' });
@@ -135,6 +143,63 @@
     toast('Copiado. Cole no painel do OpenChamber (DeepSeek Construtor).', 'warn');
   }
 
+  // ---------- Direção OpenChamber -> DeepSeek ----------
+  function findInput() {
+    for (const sel of INPUT_SELECTORS) {
+      const el = document.querySelector(sel);
+      if (el && el instanceof HTMLElement && !el.closest('#deepseek-bridge-ui')) {
+        // Tenta pegar o maior textarea visivel
+        return el;
+      }
+    }
+    // Fallback: maior textarea na pagina
+    const texts = Array.from(document.querySelectorAll('textarea')).filter((el) => !(el instanceof HTMLElement && el.closest('#deepseek-bridge-ui')));
+    if (texts.length) return texts[texts.length - 1];
+    return null;
+  }
+
+  function injectIntoDeepSeek(texto) {
+    const input = findInput();
+    if (!input) {
+      log('Input do DeepSeek nao encontrado');
+      toast('Nao encontrei o campo de texto do DeepSeek.', 'warn');
+      return false;
+    }
+    input.focus();
+    document.execCommand('selectAll', false, null);
+    // document.execCommand funciona em textarea; para contenteditable, insere o texto
+    const ok = document.execCommand('insertText', false, texto);
+    if (!ok) {
+      (input).value = texto;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    log('Pergunta injetada no DeepSeek input');
+    toast('Pergunta do OpenChamber injetada no DeepSeek. Revise e envie.', 'ok');
+    return true;
+  }
+
+  function pollPerguntas() {
+    gmRequest(
+      'GET',
+      POLL_PATH,
+      null,
+      (json) => {
+        if (!json.ok || !json.text || json.ts === pollPerguntas.lastTs) {
+          return;
+        }
+        pollPerguntas.lastTs = json.ts;
+        log('Nova pergunta do OpenChamber recebida', json.ts);
+        injectIntoDeepSeek(json.text);
+      },
+      () => {
+        // Servidor indisponivel — silencioso para nao spammar
+      },
+    );
+  }
+  pollPerguntas.lastTs = null;
+
+  // ---------- UI ----------
   function toast(msg, kind) {
     const el = document.createElement('div');
     el.textContent = msg;
@@ -176,7 +241,7 @@
     const root = document.createElement('div');
     root.id = 'deepseek-bridge-ui';
     root.innerHTML = `
-      <div class="hint">Ponte DeepSeek → OpenChamber ativa.<br/>Clique em <b>Enviar última resposta</b> após o DeepSeek responder.</div>
+      <div class="hint">Ponte DeepSeek <-> OpenChamber ativa.<br/>Perguntas do OpenChamber entram sozinhas aqui. Clique em <b>Enviar última resposta</b> apos o DeepSeek responder.</div>
       <div class="row">
         <button id="deepseek-bridge-send">Enviar última resposta</button>
         <button id="deepseek-bridge-copy" class="sec">Copiar</button>
@@ -216,10 +281,16 @@
         const texto = getLastMessageText();
         if (texto) enviarParaOpenChamber(texto);
       });
+      GM_registerMenuCommand('DeepSeek: buscar pergunta do OpenChamber agora', () => {
+        pollPerguntas();
+      });
     }
+
+    // Poll continuo para receber perguntas do OpenChamber
+    pollPerguntas();
+    setInterval(pollPerguntas, 3000);
   }
 
-  // Injeta quando a pagina carregar (document-idle ja chega pronto, mas reforca).
   if (document.body) {
     criarUI();
   } else {
@@ -229,5 +300,5 @@
     if (!document.getElementById('deepseek-bridge-ui')) criarUI();
   }).observe(document.documentElement, { childList: true, subtree: true });
 
-  log('bridge iniciada em', location.hostname);
+  log('bridge bidirecional iniciada em', location.hostname);
 })();

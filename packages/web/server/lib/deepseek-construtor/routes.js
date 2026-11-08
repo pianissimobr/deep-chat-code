@@ -14,6 +14,7 @@ const PYTHON_DIR = join(__dirname, 'python');
 const PYTHON_BIN = process.env.PYTHON_PATH || 'python3';
 const BRIDGE_DIR = process.env.DEEPSEEK_BRIDGE_DIR || join(process.cwd(), '.openchamber', 'deepseek-bridge');
 const BRIDGE_FILE = join(BRIDGE_DIR, 'last-response.json');
+const PERGUNTA_FILE = join(BRIDGE_DIR, 'ultima-pergunta.json');
 
 const runPython = (script, args = [], timeoutMs = 300_000) => {
   return new Promise((resolve, reject) => {
@@ -94,6 +95,34 @@ export const registerDeepSeekConstrutorRoutes = (app) => {
       return res.json({ ok: true, text: entry.text, ts: entry.ts });
     } catch {
       return res.json({ ok: false, text: null, ts: null, msg: 'Nenhuma resposta ainda' });
+    }
+  });
+
+  // Direção OpenChamber -> DeepSeek: o painel (ou userscript openchamber-bridge)
+  // deixa a pergunta na fila; o userscript do DeepSeek faz polling e injeta.
+  app.post('/api/deepseek-construtor/enviar-pergunta', async (req, res) => {
+    try {
+      const text = String(req.body?.text ?? req.body?.texto ?? '').trim();
+      if (!text) {
+        return res.status(400).json({ error: 'test é obrigatório' });
+      }
+      await mkdir(BRIDGE_DIR, { recursive: true });
+      const entry = { text, ts: new Date().toISOString(), origin: req.ip ?? null };
+      await writeFile(PERGUNTA_FILE, JSON.stringify(entry, null, 2), 'utf-8');
+      return res.json({ ok: true, ...entry, msg: 'Pergunta enfileirada para o DeepSeek' });
+    } catch (err) {
+      return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.get('/api/deepseek-construtor/ultima-pergunta', async (_req, res) => {
+    try {
+      const { readFile } = await import('fs/promises');
+      const raw = await readFile(PERGUNTA_FILE, 'utf-8');
+      const entry = JSON.parse(raw);
+      return res.json({ ok: true, text: entry.text, ts: entry.ts });
+    } catch {
+      return res.json({ ok: false, text: null, ts: null, msg: 'Nenhuma pergunta ainda' });
     }
   });
 
