@@ -65,8 +65,10 @@ def run(cmd, check=True, capture=False, cwd=None):
             text=True,
             cwd=cwd or ROOT,
         )
-        if capture and result.stdout:
-            return result.stdout.strip()
+        # When capture=True we return stdout as text; callers expecting
+        # returncode must use capture=False and read result.returncode.
+        # To keep a single API, always return the CompletedProcess and let
+        # callers read .stdout themselves when needed.
         return result
     except subprocess.CalledProcessError as e:
         log(f"Comando falhou com codigo {e.returncode}", "error")
