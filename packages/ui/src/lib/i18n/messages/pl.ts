@@ -1207,15 +1207,12 @@ export const dict: Record<I18nKey, string> = {
   'chat.messageBody.actions.savingImage': 'Zapisywanie obrazu...',
   'chat.messageBody.actions.saveAsImage': 'Zapisz jako obraz',
   'chat.messageBody.actions.saveAsPlan': 'Zapisz jako plan',
-<<<<<<< HEAD
   'chat.deepseekPanel.toggleTitle': 'Open DeepSeek chat',
   'chat.deepseekPanel.closePanel': 'Close DeepSeek panel',
   'chat.deepseekPanel.pin': 'Keep panel open',
   'chat.deepseekPanel.unpin': 'Allow auto-close',
   'chat.deepseekPanel.close': 'Close chat',
   'chat.deepseekPanel.copyResponse': 'Copy response to builder',
-=======
->>>>>>> 44f9b41ac5845f7d079f6c829806ef3f70e7f0a2
   'chat.messageBody.actions.construirCodigo': 'Build code',
   'chat.messageBody.actions.construindo': 'Building...',
   'chat.messageBody.actions.startNewSession': 'Rozpocznij nową sesję z tej odpowiedzi',

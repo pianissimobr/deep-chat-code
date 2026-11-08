@@ -2356,7 +2356,6 @@ export const dict = {
   'chat.messageBody.actions.savingImage': 'Enregistrement de l\'image...',
   'chat.messageBody.actions.saveAsImage': 'Enregistrer sous image',
   'chat.messageBody.actions.saveAsPlan': 'Enregistrer comme plan',
-<<<<<<< HEAD
   'chat.messageBody.actions.construirCodigo': 'Build code',
   'chat.messageBody.actions.construindo': 'Building...',
   'chat.deepseekPanel.toggleTitle': 'Open DeepSeek chat',
@@ -2365,8 +2364,6 @@ export const dict = {
   'chat.deepseekPanel.unpin': 'Allow auto-close',
   'chat.deepseekPanel.close': 'Close chat',
   'chat.deepseekPanel.copyResponse': 'Copy response to builder',
-=======
->>>>>>> 44f9b41ac5845f7d079f6c829806ef3f70e7f0a2
   'chat.messageBody.actions.startNewSession': 'Démarrer une nouvelle session à partir de cette réponse',
   'chat.messageBody.actions.startNewMultiRun': 'Démarrer une nouvelle exécution multiple à partir de cette réponse',
   'chat.messageBody.actions.branchMenu': 'Continuer à partir de cette réponse',

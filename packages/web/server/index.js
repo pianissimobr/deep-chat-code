@@ -2313,6 +2313,12 @@ const ensureGlobalWatcherStarted = async () => {
   return globalWatcherStartPromise;
 };
 const bootstrapOpenCodeAtStartup = async (...args) => {
+  if (ENV_SKIP_OPENCODE_START) {
+    // OpenCode is skipped via environment variable; avoid watcher timeout
+    // and subsequent graceful shutdown when OpenCode is unavailable.
+    console.log('[opencode] OpenCode startup skipped (OPENCODE_SKIP_START=true)');
+    return;
+  }
   await openCodeLifecycleRuntime.bootstrapOpenCodeAtStartup(...args);
   // These steps need a running OpenCode; a retry runs them once it starts.
   if (openCodeLifecycleRuntime.scheduleBootstrapRetry(bootstrapOpenCodeAtStartup, finishOpenCodeBootstrap)) return;
@@ -2412,7 +2418,13 @@ const gracefulShutdownRuntime = createGracefulShutdownRuntime({
   },
 });
 
-const gracefulShutdown = (...args) => gracefulShutdownRuntime.gracefulShutdown(...args);
+const gracefulShutdown = (...args) => {
+  if (ENV_SKIP_OPENCODE_START) {
+    // OpenCode is skipped; do not trigger graceful shutdown on watcher timeout
+    return;
+  }
+  gracefulShutdownRuntime.gracefulShutdown(...args);
+};
 
 async function main(options = {}) {
   beginGuestServiceHost({ registryDir: guestServiceRegistryDir(OPENCHAMBER_DATA_DIR) });

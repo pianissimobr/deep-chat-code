@@ -2647,15 +2647,12 @@ export const dict = {
   'chat.messageBody.actions.construirCodigo': 'Build code',
   'chat.messageBody.actions.construindo': 'Building...',
   'chat.messageBody.actions.startNewSession': 'Start new session from this answer',
-<<<<<<< HEAD
   'chat.deepseekPanel.toggleTitle': 'Open DeepSeek chat',
   'chat.deepseekPanel.closePanel': 'Close DeepSeek panel',
   'chat.deepseekPanel.pin': 'Keep panel open',
   'chat.deepseekPanel.unpin': 'Allow auto-close',
   'chat.deepseekPanel.close': 'Close chat',
   'chat.deepseekPanel.copyResponse': 'Copy response to builder',
-=======
->>>>>>> 44f9b41ac5845f7d079f6c829806ef3f70e7f0a2
   'chat.messageBody.actions.startNewMultiRun': 'Start new multi-run from this answer',
   'chat.messageBody.actions.branchMenu': 'Continue from this answer',
   'chat.messageBody.footer.reasoningTooltip': 'Reasoning: {effort}',

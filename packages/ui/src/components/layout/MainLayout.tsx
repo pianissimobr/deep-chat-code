@@ -37,10 +37,7 @@ import { useSessionListSync } from '@/components/session/sidebar/list/useSession
 import { setChatCovered } from './rightSlot';
 
 import { ChatView } from '@/components/views/ChatView';
-<<<<<<< HEAD
 import { DeepSeekPanel } from '@/components/chat/deepseek-construtor/DeepSeekPanel';
-=======
->>>>>>> 44f9b41ac5845f7d079f6c829806ef3f70e7f0a2
 import { DiagnosticDialogAvailableContext } from '@/lib/diagnostics/dialog-availability';
 
 const loadSettingsWindow = () => import('@/components/views/SettingsWindow').then(m => m.SettingsWindow);
@@ -233,10 +230,7 @@ export const MainLayout: React.FC = () => {
                                         <main className="min-h-0 flex-1 overflow-hidden bg-background relative" data-page-scroll-lock="true">
                                             <div className={cn('absolute inset-0', isSurfacePageOpen && 'invisible')}>
                                                 <ErrorBoundary><ChatView active={!isSettingsDialogOpen && !isSurfacePageOpen} /></ErrorBoundary>
-<<<<<<< HEAD
-                                            <DeepSeekPanel />
-=======
->>>>>>> 44f9b41ac5845f7d079f6c829806ef3f70e7f0a2
+                                                <DeepSeekPanel />
                                             </div>
                                             <ErrorBoundary><OnDemand needed={isRunOverviewOpen} load={loadRunOverview} onFailure={closeMainSurfaces} /></ErrorBoundary>
                                             <ErrorBoundary><OnDemand needed={isScheduledTasksPageOpen} load={loadScheduledTasksDialog} onFailure={closeMainSurfaces} /></ErrorBoundary>

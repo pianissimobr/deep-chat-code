@@ -2644,15 +2644,12 @@ export const dict: Record<I18nKey, string> = {
   'chat.messageBody.actions.savingImage': '이미지 저장 중…',
   'chat.messageBody.actions.saveAsImage': '이미지로 저장',
   'chat.messageBody.actions.saveAsPlan': '플랜으로 저장',
-<<<<<<< HEAD
   'chat.deepseekPanel.toggleTitle': 'Open DeepSeek chat',
   'chat.deepseekPanel.closePanel': 'Close DeepSeek panel',
   'chat.deepseekPanel.pin': 'Keep panel open',
   'chat.deepseekPanel.unpin': 'Allow auto-close',
   'chat.deepseekPanel.close': 'Close chat',
   'chat.deepseekPanel.copyResponse': 'Copy response to builder',
-=======
->>>>>>> 44f9b41ac5845f7d079f6c829806ef3f70e7f0a2
   'chat.messageBody.actions.construirCodigo': 'Build code',
   'chat.messageBody.actions.construindo': 'Building...',
   'chat.messageBody.actions.startNewSession': '이 응답에서 새 세션 시작',

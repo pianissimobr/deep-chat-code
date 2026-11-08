@@ -2644,7 +2644,6 @@ export const dict = {
   'chat.messageBody.actions.savingImage': 'Afbeelding opslaan...',
   'chat.messageBody.actions.saveAsImage': 'Opslaan als afbeelding',
   'chat.messageBody.actions.saveAsPlan': 'Opslaan als plan',
-<<<<<<< HEAD
   'chat.messageBody.actions.construirCodigo': 'Build code',
   'chat.messageBody.actions.construindo': 'Building...',
   'chat.deepseekPanel.toggleTitle': 'Open DeepSeek chat',
@@ -2653,8 +2652,6 @@ export const dict = {
   'chat.deepseekPanel.unpin': 'Allow auto-close',
   'chat.deepseekPanel.close': 'Close chat',
   'chat.deepseekPanel.copyResponse': 'Copy response to builder',
-=======
->>>>>>> 44f9b41ac5845f7d079f6c829806ef3f70e7f0a2
   'chat.messageBody.actions.startNewSession': 'Nieuwe sessie starten vanaf dit antwoord',
   'chat.messageBody.actions.startNewMultiRun': 'Nieuwe multi-run starten vanaf dit antwoord',
   'chat.messageBody.actions.branchMenu': 'Vanaf dit antwoord verdergaan',

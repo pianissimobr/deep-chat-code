@@ -144,7 +144,11 @@ export const createStartupPipelineRuntime = (dependencies) => {
     tunnelRuntimeContext.setActivePort(startupResult.activePort);
     if (onListenerReady) await onListenerReady();
     scheduleOpenCodeApiDetection();
-    void bootstrapOpenCodeAtStartup();
+    if (process.env.OPENCODE_SKIP_START === 'true' || process.env.ENV_SKIP_OPENCODE_START === 'true') {
+      console.log('[opencode] OpenCode bootstrap skipped (OPENCODE_SKIP_START=true)');
+    } else {
+      void bootstrapOpenCodeAtStartup();
+    }
 
     serverStartupRuntime.attachProcessHandlers({ attachSignals });
 
