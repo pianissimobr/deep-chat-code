@@ -509,12 +509,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           })
         : null;
 
-    const extraActionsComConstrutor: MessageExtraAction[] | undefined = React.useMemo(() => {
-      const actions: MessageExtraAction[] = [];
-      if (guestMessageActions) actions.push(...guestMessageActions);
-      if (deepSeekConstrutorExtra) actions.push(deepSeekConstrutorExtra);
-      return actions.length > 0 ? actions : undefined;
-    }, [guestMessageActions, deepSeekConstrutorExtra]);
+    // Construtor extra is merged into extraActionsComConstrutor after guest actions are declared below.
 
     // The turn footer copies the whole reply: what the earlier steps of the
     // turn wrote before their tool calls, then this message.
@@ -573,6 +568,13 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             },
         }));
     }, [guestActionEntries, isUser, sessionId, t]);
+
+    const extraActionsComConstrutor: MessageExtraAction[] | undefined = React.useMemo(() => {
+      const actions: MessageExtraAction[] = [];
+      if (guestMessageActions) actions.push(...guestMessageActions);
+      if (deepSeekConstrutorExtra) actions.push(deepSeekConstrutorExtra);
+      return actions.length > 0 ? actions : undefined;
+    }, [guestMessageActions, deepSeekConstrutorExtra]);
 
     // NEW: Fork handler
     const handleFork = React.useCallback(() => {
