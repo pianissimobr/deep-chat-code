@@ -205,7 +205,10 @@ def main():
     print()
 
     if not args.install_only:
-        resposta = input("Deseja iniciar o servidor agora? (s/n): ").strip().lower()
+        try:
+            resposta = input("Deseja iniciar o servidor agora? (s/n): ").strip().lower()
+        except EOFError:
+            resposta = "n"
         if resposta in ("s", "sim", "y", "yes", ""):
             start_server()
         else:
