@@ -509,10 +509,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
           })
         : null;
 
-    const extraActionsComConstrutor = React.useMemo(() => {
-      const actions = [...(guestMessageActions ?? []), deepSeekConstrutorExtra].filter(
-        (a): a is MessageExtraAction => Boolean(a),
-      );
+    const extraActionsComConstrutor: MessageExtraAction[] | undefined = React.useMemo(() => {
+      const actions: MessageExtraAction[] = [];
+      if (guestMessageActions) actions.push(...guestMessageActions);
+      if (deepSeekConstrutorExtra) actions.push(deepSeekConstrutorExtra);
       return actions.length > 0 ? actions : undefined;
     }, [guestMessageActions, deepSeekConstrutorExtra]);
 
