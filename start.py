@@ -97,11 +97,16 @@ def check_system():
 
 
 def check_node_version():
-    """Verifica se o Node.js atende ao requisito mínimo (>=24.14)."""
+    """Verifica a versão do Node.js e avisa sobre compatibilidade com o OpenChamber.
+
+    O OpenChamber requer Node.js >= 24.14, mas o Bun possui seu próprio runtime
+    e pode funcionar com versões mais antigas do Node.js. A instalação não é
+    bloqueada, apenas um aviso é exibido.
+    """
     result = run("node --version", check=False, capture=True)
     if result.returncode != 0:
-        log("Node.js não encontrado (necessário para o Bun)", "error")
-        sys.exit(1)
+        log("Node.js não encontrado (recomendado para o Bun)", "warn")
+        return
 
     version_str = result.stdout.strip().lstrip("v")
     try:
@@ -111,8 +116,15 @@ def check_node_version():
         return
 
     if major < 24:
-        log(f"Node.js {version_str} detectado. O OpenChamber requer Node.js >= 24.14.", "warn")
-        log("Considere atualizar o Node.js antes de continuar.", "warn")
+        log(
+            f"Node.js {version_str} detectado. "
+            f"O OpenChamber recomenda Node.js >= 24.14, mas o Bun possui runtime próprio "
+            f"e a instalação continuará mesmo assim.",
+            "warn",
+        )
+        log("Se encontrar erros durante o build, considere atualizar o Node.js.", "warn")
+    else:
+        log(f"Node.js {version_str}: compatível com o OpenChamber.", "ok")
 
 
 def create_env():
