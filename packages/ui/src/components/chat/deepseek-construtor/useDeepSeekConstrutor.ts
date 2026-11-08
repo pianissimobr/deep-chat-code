@@ -12,7 +12,7 @@ export interface DeepSeekConstrutorState {
 /**
  * Hook que expõe o Construtor de Código DeepSeek:
  * 1. Gera a árvore de arquivos do projeto (tree-content-generator wrapper).
- * 2. Envia a resposta do DeepSeek + contexto para o loop OpenAI → execução local.
+ * 2. Envia a resposta do DeepSeek + contexto para o loop OpenRouter → execução local.
  */
 export function useDeepSeekConstrutor() {
   const [estado, setEstado] = useState<DeepSeekConstrutorState>({
@@ -43,7 +43,7 @@ export function useDeepSeekConstrutor() {
   }, []);
 
   const executar = useCallback(
-    async (textoDeepSeek: string, caminhoArvore?: string, workspace = './workspace_construtor') => {
+    async (textoDeepSeek: string, caminhoArvore?: string, workspace = './workspace_construtor', modelo = 'cohere/north-mini-code:free') => {
       setEstado((s) => ({ ...s, status: 'executando' }));
       try {
         const resposta = await runtimeFetch('/api/deepseek-construtor/executar', {
@@ -53,6 +53,7 @@ export function useDeepSeekConstrutor() {
             resposta: textoDeepSeek,
             contexto: caminhoArvore,
             workspace,
+            modelo,
           }),
         });
         if (!resposta.ok) {

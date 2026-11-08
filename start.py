@@ -12,7 +12,7 @@ Instala tudo, confere a ponte Tampermonkey e sobe o servidor. Opcoes:
 
 Passos manuais que este script NAO faz (nao e possivel automatizar sem UI):
   - Instalar a extensao Tampermonkey no navegador
-  - Colar sua OPENAI_API_KEY no .env (e segredo, nao vai commitar)
+  - Colar sua OPENROUTER_API_KEY no .env (e segredo, nao vai commitar)
 
 O script apenas verifica e orienta esses passos.
 """
@@ -128,11 +128,11 @@ def create_env():
         return
     if not ENV_EXAMPLE.exists():
         log(".env.example nao encontrado, criando .env vazio.", "warn")
-        ENV_FILE.write_text("OPENAI_API_KEY=\nDEEPSEEK_URL=https://chat.deepseek.com\n")
+        ENV_FILE.write_text("OPENROUTER_API_KEY=\nOPENROUTER_MODEL=cohere/north-mini-code:free\nDEEPSEEK_URL=https://chat.deepseek.com\n")
         return
     shutil.copy(ENV_EXAMPLE, ENV_FILE)
     log(".env criado a partir do .env.example.", "ok")
-    log("IMPORTANTE: edite o .env e preencha sua OPENAI_API_KEY antes de iniciar.", "warn")
+    log("IMPORTANTE: edite o .env e preencha sua OPENROUTER_API_KEY antes de iniciar (modelo padrao: cohere/north-mini-code:free).", "warn")
 
 
 def check_env():
@@ -141,7 +141,7 @@ def check_env():
     try:
         for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
             line = line.strip()
-            if line.startswith("OPENAI_API_KEY="):
+            if line.startswith("OPENROUTER_API_KEY="):
                 value = line.split("=", 1)[1].strip()
                 if not value or value == "sk-sua-chave-aqui":
                     placeholder = True
@@ -150,9 +150,9 @@ def check_env():
         log(".env nao legivel.", "warn")
         return
     if placeholder:
-        log("OPENAI_API_KEY ainda esta com placeholder. Edite o .env.", "warn")
+        log("OPENROUTER_API_KEY ainda esta com placeholder. Edite o .env.", "warn")
     else:
-        log("OPENAI_API_KEY parece definida (nao exibida).", "ok")
+        log("OPENROUTER_API_KEY parece definida (nao exibida). Padrao: cohere/north-mini-code:free.", "ok")
 
 
 def verify_integration_files():
@@ -218,6 +218,19 @@ def install_bun_deps():
     log("Instalando dependencias do Bun (pode demorar alguns minutos)...", "step")
     run("bun install", check=True)
     log("Dependencias do Bun instaladas com sucesso.", "ok")
+    # Construtor chama OpenRouter via lib openai (cliente OpenAI-compativel)
+    try:
+        result = run("python3 -c 'import openai'", check=False, capture=True)
+        if result.returncode != 0:
+            log("Instalando lib Python openai (cliente OpenRouter) ...", "step")
+            run("python3 -m pip install --user --break-system-packages 'openai>=1.0'", check=True)
+            log("lib openai instalada.", "ok")
+        else:
+            log("lib openai ja instalada.", "ok")
+    except SystemExit:
+        raise
+    except Exception as e:
+        log(f"Nao foi possivel verificar/instalar lib openai: {e}", "warn")
 
 
 def build_prod():
@@ -374,7 +387,7 @@ def main():
     print(f"{c('=' * 60, 'bold')}\n")
 
     log("Proximos passos:", "step")
-    print("  1. Edite o .env e preencha sua OPENAI_API_KEY")
+    print("  1. Edite o .env e preencha sua OPENROUTER_API_KEY (modelo padrao: cohere/north-mini-code:free)")
     print(f"  2. Rode: python start.py --start-only --build (opcional) --port {args.port}")
     print(f"  3. Instale o userscript Tampermonkey (veja abaixo)")
     print(f"  4. Acesse: http://localhost:{args.port}")

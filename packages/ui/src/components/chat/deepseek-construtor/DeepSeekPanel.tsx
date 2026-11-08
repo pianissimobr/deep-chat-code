@@ -22,6 +22,7 @@ export function DeepSeekPanel() {
   const [statusText, setStatusText] = useState<string | null>(null);
   const [lastReceivedAt, setLastReceivedAt] = useState<string | null>(null);
   const [output, setOutput] = useState<string | null>(null);
+  const [model, setModel] = useState('cohere/north-mini-code:free');
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   const currentSessionId = useSessionUIStore((s) => s.currentSessionId);
@@ -160,13 +161,13 @@ export function DeepSeekPanel() {
     setStatusText(estadoStatus === 'gerando-arvore' ? t('chat.messageBody.actions.construindo') : null);
     const caminho = await gerarArvore(diretorio);
     if (!caminho) return;
-    const result = await executar(texto, caminho);
+    const result = await executar(texto, caminho, undefined, model.trim() || 'cohere/north-mini-code:free');
     if (result) {
       const stdout = result.stdout ?? '';
       const stderr = result.stderr ?? '';
       setOutput([stdout, stderr].filter(Boolean).join('\n') || null);
     }
-  }, [diretorio, estadoStatus, executar, gerarArvore, input, t]);
+  }, [diretorio, estadoStatus, executar, gerarArvore, input, model, t]);
 
   const limpar = useCallback(() => {
     setInput('');
@@ -253,6 +254,22 @@ export function DeepSeekPanel() {
               <Button type="button" variant="outline" size="sm" onClick={limpar}>
                 {t('chat.deepseekPanel.clear')}
               </Button>
+            </div>
+
+            <div>
+              <label htmlFor="deepseek-model" className="text-xs font-medium text-foreground">
+                OpenRouter model
+              </label>
+              <input
+                id="deepseek-model"
+                type="text"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="mt-1 w-full text-xs rounded-md border border-edge-muted bg-background px-2 py-1.5"
+                disabled={isBuilding}
+                placeholder="cohere/north-mini-code:free"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">Padrao: cohere/north-mini-code:free</p>
             </div>
 
             <div>

@@ -118,10 +118,10 @@ export const registerDeepSeekConstrutorRoutes = (app) => {
     }
   });
 
-  // Executa o loop OpenAI → escrita de código → execução local → feedback para DeepSeek
+  // Executa o loop OpenRouter → escrita de código → execução local → feedback para DeepSeek
   app.post('/api/deepseek-construtor/executar', async (req, res) => {
     try {
-      const { resposta, contexto, workspace = './workspace_construtor', modelo = 'gpt-4o-mini' } = req.body || {};
+      const { resposta, contexto, workspace = './workspace_construtor', modelo = process.env.OPENROUTER_MODEL || 'cohere/north-mini-code:free' } = req.body || {};
       if (!resposta) {
         return res.status(400).json({ error: 'resposta é obrigatório' });
       }
