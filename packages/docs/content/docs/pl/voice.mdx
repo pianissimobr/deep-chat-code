@@ -1,0 +1,49 @@
+---
+title: Tryb głosowy
+description: Mów do OpenChamber i słuchaj odczytywanych odpowiedzi.
+---
+
+# Tryb głosowy
+
+Tryb głosowy pozwala dyktować wiadomości i odsłuchiwać odpowiedzi. Włącz go w **Settings → OpenChamber → Voice**.
+
+## Odczytywanie odpowiedzi na głos (text-to-speech)
+
+Wybierz, jak odpowiedzi są wymawiane:
+
+- **browser** — wbudowane głosy Twojej przeglądarki, bez konfiguracji
+- **OpenAI** — głosy OpenAI; wklej swój klucz API i wybierz głos
+- **OpenAI-compatible** — dowolna usługa mówiąca w formacie OpenAI; wprowadź jej adres URL oraz, jeśli go potrzebuje, klucz API
+- **macOS say** — wbudowane polecenie `say`, na Macach, które je mają
+
+Po włączeniu na wiadomościach pojawia się przycisk odtwarzania, aby je odsłuchać.
+
+## Dyktowanie wiadomości (speech-to-text)
+
+Wybierz, jak Twoja mowa jest transkrybowana:
+
+- **Lokalny** uruchamia model mowy na komputerze, na którym działa OpenChamber. Model pobiera się przy pierwszym dyktowaniu, a Twoje nagrania zostają na tym komputerze.
+- **Serwer** wysyła Twoje nagranie do usługi transkrypcji zgodnej z OpenAI. Wprowadź jej adres URL oraz, jeśli go potrzebuje, klucz API.
+
+Modele lokalne:
+
+- **Parakeet v3** jest domyślny. Zna 25 języków europejskich, w tym angielski i ukraiński, i jest najszybszy. Jeśli Twoje dyktowanie działało już na Parakeet v2, zanim v3 stał się domyślny, zostaje ono na v2, dopóki nie wybierzesz innego modelu.
+- **Parakeet v2** zna tylko angielski.
+- **Whisper large-v3 turbo** zna 99 języków. Jest około dziewięciu razy wolniejszy od Parakeet, więc długie dyktowania pojawiają się dopiero po kilku sekundach.
+- **Qwen3-ASR 0.6B** zna 30 języków, w tym chiński, japoński, koreański i arabski. Nie zna ukraińskiego.
+- **Whisper tiny** to najmniejszy plik do pobrania, dla wolnych komputerów.
+
+Modele Whisper i Qwen3-ASR same rozpoznają język i przy krótkiej frazie mogą wybrać zły. Wpisz kod swojego języka w polu **Język** pod listą modeli, na przykład `uk` lub `en`, a przestaną zgadywać.
+
+Włącz **Poprawiaj źle usłyszane słowa**, a Twój Small Model (Ustawienia → Sesje → Small Model) przejrzy tekst po zakończeniu dyktowania. Zastępuje słowa, które model mowy źle usłyszał, i usuwa wtrącenia takie jak "yyy". Tekst trafia wtedy do dostawcy Small Model i pojawia się sekundę lub dwie później. Bez Small Model tekst jest wstawiany tak, jak został usłyszany.
+
+Klucze API wpisane dla tych usług przechowuje serwer OpenChamber, a nie przeglądarka. Wpisz klucz i naciśnij Enter, aby go zapisać; pole pokaże potem, że klucz jest zapisany, a krzyżyk go usuwa.
+
+## Uwaga dla telefonów
+
+Do odczytywania odpowiedzi na głos na telefonie najbardziej niezawodne są opcje OpenAI lub OpenAI-compatible — przeglądarki mobilne ograniczają wbudowane głosy.
+
+## Powiązane
+
+- [Powiadomienia](/pl/notifications/) — zamiast słuchania otrzymuj ping
+- [Dostawcy, modele i agenci](/pl/providers/) — gdzie Twój klucz OpenAI może już się znajdować

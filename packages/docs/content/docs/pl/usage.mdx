@@ -1,0 +1,36 @@
+---
+title: Zużycie i limity
+description: Śledź, ile planu dostawcy już wykorzystałeś.
+---
+
+# Zużycie i limity
+
+Strona zużycia pokazuje, ile planu każdego dostawcy wykorzystałeś, dzięki czemu widzisz, jak blisko limitu jesteś. Otwórz ją w **Settings → Usage**.
+
+## Co widzisz
+
+Dla każdego połączonego dostawcy OpenChamber pokazuje:
+
+- ile bieżącego okna wykorzystałeś, w postaci paska
+- podział według modelu
+- wskaźnik tempa, byś mógł ocenić, czy zmierzasz w stronę wyczerpania limitu
+
+Możesz wybrać, którzy dostawcy się pojawiają, a to samo podsumowanie jest dostępne z rozwijanego menu w nagłówku aplikacji.
+
+## Obsługiwani dostawcy
+
+Zużycie działa dla dostawców, którzy publikują limit, w tym Claude, Codex, GitHub Copilot, Google, OpenRouter, Kimi, NanoGPT, z.ai, Zhipu, MiniMax, Ollama Cloud i Wafer.
+
+Dostawca pokazuje zużycie dopiero po zalogowaniu się do niego na stronie [Dostawcy](/pl/providers/). Kilku dostawców wymaga własnych danych logowania, które wpisujesz w Settings → Usage — exe.dev, Cursor i ZenMux. Jeśli dostawca nie pokazuje danych, zwykle oznacza to brak tego poświadczenia.
+
+[Rozszerzenie](/pl/extensions/) może dodać własnego dostawcę zużycia. Jego karta stoi za wbudowanymi, z nazwą i ikoną rozszerzenia, i działa tak samo; okno uprawnień rozszerzenia wymienia dostawców, których dane logowania odczytuje.
+
+## Pozwól agentom to czytać
+
+Włącz **Narzędzie użycia dla agentów** w **Ustawienia → Ogólne → Narzędzia OpenChamber**, a agenci odczytają te same liczby: okna każdego dostawcy, ile z każdego wykorzystano i kiedy się odnawia. Poproś agenta, żeby sprawdził limit przed długim zadaniem, albo ustaw [zaplanowane zadanie](/pl/scheduled-tasks/), które zrelacjonuje stan Twoich planów.
+
+Agent widzi to samo co ta strona, bez konta, na które zalogowano się u każdego dostawcy. Każde sprawdzenie ponownie odpytuje dostawców, tak jak otwarcie tej strony. Narzędzie jest domyślnie wyłączone i działa w instalacjach desktopowych i webowych, które używają własnego serwera OpenCode z OpenChamber.
+
+## Powiązane
+
+- [Dostawcy, modele i agenci](/pl/providers/) — zaloguj się, zanim pojawi się zużycie

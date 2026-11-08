@@ -1,0 +1,34 @@
+---
+title: Utilisation et quotas
+description: Suivez la part de votre forfait fournisseur déjà utilisée.
+---
+
+# Utilisation et quotas
+
+La page Utilisation montre quelle part du forfait de chaque fournisseur vous avez consommée, pour savoir à quel point vous approchez d’une limite. Ouvrez-la dans **Paramètres → Utilisation**.
+
+## Ce que vous voyez
+
+Pour chaque fournisseur connecté, OpenChamber affiche :
+
+- la part de la fenêtre actuelle déjà utilisée, sous forme de barre
+- une répartition par modèle
+- un indicateur de rythme, pour savoir si vous êtes en voie d’épuiser le quota
+
+Vous pouvez choisir les fournisseurs affichés, et le même résumé est disponible depuis un menu déroulant dans l’en-tête de l’application.
+
+## Fournisseurs pris en charge
+
+L’utilisation fonctionne pour les fournisseurs qui publient un quota, notamment Claude, Codex, GitHub Copilot, Google, OpenRouter, Kimi, NanoGPT, z.ai, Zhipu, MiniMax, Ollama Cloud et Wafer.
+
+Un fournisseur n’affiche l’utilisation qu’après connexion sur la page [Fournisseurs](/providers/). Quelques fournisseurs demandent un identifiant qui leur est propre, à saisir dans Utilisation — exe.dev, Cursor et ZenMux. Si un fournisseur n’affiche aucune donnée, cela signifie généralement que cet identifiant manque.
+
+## Laisser les agents le lire
+
+Activez **Outil d’utilisation pour les agents** dans **Paramètres → Général → Outils OpenChamber** et les agents pourront lire les mêmes chiffres : les fenêtres de chaque fournisseur, la part utilisée de chacune et sa date de réinitialisation. Demandez à un agent de vérifier une limite avant une longue tâche, ou faites rendre compte de vos forfaits par une [tâche planifiée](/fr/scheduled-tasks/).
+
+L’agent voit ce qu’affiche cette page, sans le compte connecté pour chaque fournisseur. Chaque consultation interroge à nouveau vos fournisseurs, comme l’ouverture de cette page. L’outil est désactivé par défaut et fonctionne sur les installations bureau et web qui utilisent le serveur OpenCode propre à OpenChamber.
+
+## Pages liées
+
+- [Fournisseurs, modèles et agents](/providers/) — connectez-vous avant que l’utilisation apparaisse

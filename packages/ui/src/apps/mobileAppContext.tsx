@@ -1,0 +1,32 @@
+/* oxlint-disable react/only-export-components */
+import React from 'react';
+
+export type MobileAppActions = {
+  /**
+   * Open the Changes surface as a modal and (optionally) navigate it to a specific diff.
+   * Scope `turn` looks for the file in Last turn first, and in Changes when Last turn has nothing for it.
+   */
+  openChanges: (options?: { diffPath?: string | null; staged?: boolean; scope?: 'turn' }) => void;
+  /** Open the Files surface as a modal. */
+  openFiles: () => void;
+  /** Open the issues and PRs board page; what it shows is set in its store first. */
+  openSourceBoard: () => void;
+};
+
+const DedicatedMobileAppContext = React.createContext<MobileAppActions | null>(null);
+
+export const DedicatedMobileAppProvider: React.FC<{
+  actions: MobileAppActions;
+  children: React.ReactNode;
+}> = ({ actions, children }) => (
+  <DedicatedMobileAppContext.Provider value={actions}>{children}</DedicatedMobileAppContext.Provider>
+);
+
+/**
+ * Returns the dedicated mobile app's surface-opening actions, or null when
+ * not inside the dedicated mobile root. Components living in shared chat /
+ * input code can use this to route navigation to mobile-native surfaces
+ * (e.g. open the Changes diff for a file) instead of
+ * desktop sidebars.
+ */
+export const useMobileAppActions = (): MobileAppActions | null => React.useContext(DedicatedMobileAppContext);

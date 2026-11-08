@@ -1,0 +1,222 @@
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { CommitInput } from './CommitInput';
+import { AIHighlightsBox } from './AIHighlightsBox';
+import { ButtonTooltip } from '@/components/ui/action-toolbar';
+import { useDeviceInfo } from '@/lib/device';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Icon } from "@/components/icon/Icon";
+import { useI18n } from '@/lib/i18n';
+
+type CommitAction = 'commit' | 'commitAndPush' | null;
+
+interface CommitSectionProps {
+  stagedCount: number;
+  commitMessage: string;
+  onCommitMessageChange: (value: string) => void;
+  generatedHighlights: string[];
+  onInsertHighlights: (highlights: string[]) => void;
+  onGenerateMessage: () => void;
+  isGeneratingMessage: boolean;
+  /** The button pressed, when there is one: the celebration starts from it. */
+  onCommit: (origin?: HTMLElement) => void;
+  onCommitAndPush: (origin?: HTMLElement) => void;
+  commitAction: CommitAction;
+  networkOperationBlocked?: boolean;
+  hasPendingIndexMutation?: boolean;
+  gitmojiEnabled: boolean;
+  onOpenGitmojiPicker: () => void;
+}
+
+export const CommitSection: React.FC<CommitSectionProps> = ({
+  stagedCount,
+  commitMessage,
+  onCommitMessageChange,
+  generatedHighlights,
+  onInsertHighlights,
+  onGenerateMessage,
+  isGeneratingMessage,
+  onCommit,
+  onCommitAndPush,
+  commitAction,
+  networkOperationBlocked = false,
+  hasPendingIndexMutation = false,
+  gitmojiEnabled,
+  onOpenGitmojiPicker,
+}) => {
+  const { t } = useI18n();
+  const hasStagedFiles = stagedCount > 0;
+  const canCommit = commitMessage.trim() && hasStagedFiles && commitAction === null && !hasPendingIndexMutation;
+  const { isMobile, hasTouchInput } = useDeviceInfo();
+  const [formFocused, setFormFocused] = React.useState(false);
+  const commitBlockedHint = !hasStagedFiles
+    ? t('contextTooltips.git.stageFilesFirst')
+    : !commitMessage.trim()
+      ? t('contextTooltips.git.writeMessageFirst')
+      : null;
+
+  // On a phone the form waits for something to commit: the list gets the height.
+  // It stays while focused, so clearing a draft does not take the field and the
+  // keyboard away from under the typing.
+  if (isMobile && !formFocused && !hasStagedFiles && !commitMessage.trim() && generatedHighlights.length === 0) {
+    return (
+      <section className="flex items-baseline gap-2">
+        <h3 className="typography-ui-header font-semibold text-foreground">{t('gitView.commit.title')}</h3>
+        <span className="min-w-0 truncate typography-meta text-muted-foreground">{t('gitView.commit.stageFilesHint')}</span>
+      </section>
+    );
+  }
+
+  const containerClassName = 'border-0 bg-transparent rounded-none';
+  const headerClassName = 'flex w-full items-baseline gap-2 px-0 pt-2 pb-1';
+  const contentClassName = 'flex flex-col gap-3 px-0 pt-1 pb-3';
+
+  return (
+    <section
+      className={containerClassName}
+      onFocus={() => setFormFocused(true)}
+      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFormFocused(false); }}
+    >
+      <div className={headerClassName}>
+        <h3 className="typography-ui-header font-semibold text-foreground">{t('gitView.commit.title')}</h3>
+        {!hasStagedFiles ? (
+          <span className="min-w-0 truncate typography-meta text-muted-foreground">
+            {t('gitView.commit.stageFilesHint')}
+          </span>
+        ) : null}
+      </div>
+
+      <div className={contentClassName}>
+        <AIHighlightsBox
+          highlights={generatedHighlights}
+          onInsert={onInsertHighlights}
+        />
+
+        <CommitInput
+          value={commitMessage}
+          onChange={onCommitMessageChange}
+          onSubmit={() => {
+            if (canCommit && !isGeneratingMessage) onCommit();
+          }}
+          placeholder={t('gitView.commit.messagePlaceholder')}
+          disabled={commitAction !== null}
+          hasTouchInput={hasTouchInput}
+          isMobile={isMobile}
+        />
+
+        {gitmojiEnabled && (
+          <ButtonTooltip sideOffset={8} label={t('contextTooltips.git.addGitmoji')} className="w-fit">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenGitmojiPicker}
+              className="w-fit"
+              type="button"
+            >
+              <Icon name="emotion-happy" className="size-4" />
+              {t('gitView.commit.addGitmoji')}
+            </Button>
+          </ButtonTooltip>
+        )}
+
+        <div className="@container/commit-actions flex items-center gap-2 min-w-0">
+          <ButtonTooltip sideOffset={8} label={hasStagedFiles ? t('gitView.commit.generateAria') : t('contextTooltips.git.stageFilesFirst')}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onGenerateMessage}
+              disabled={
+                isGeneratingMessage ||
+                commitAction !== null ||
+                hasPendingIndexMutation ||
+                stagedCount === 0
+              }
+              type="button"
+              aria-label={t('gitView.commit.generateAria')}
+              className="commit-actions__btn"
+            >
+              {isGeneratingMessage ? (
+                <Icon name="loader-4" className="size-4 animate-spin" />
+              ) : (
+                <Icon name="ai-generate-2" className="size-4 text-primary" />
+              )}
+              <span className="commit-actions__label">{t('gitView.commit.generate')}</span>
+            </Button>
+          </ButtonTooltip>
+
+          <div className="flex-1" />
+
+          <ButtonTooltip sideOffset={8} label={commitBlockedHint ?? t('contextTooltips.git.commit')}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(event) => onCommit(event.currentTarget)}
+              disabled={!canCommit || isGeneratingMessage}
+              className="commit-actions__btn whitespace-nowrap"
+              aria-label={t('gitView.commit.commitAria')}
+            >
+              {commitAction === 'commit' ? (
+                <>
+                  <Icon name="loader-4" className="size-4 animate-spin" />
+                  <span className="commit-actions__label">{t('gitView.commit.committing')}</span>
+                </>
+              ) : (
+                <>
+                  <Icon name="git-commit" className="size-4" />
+                  <span className="commit-actions__label">{t('gitView.commit.commit')}</span>
+                </>
+              )}
+            </Button>
+          </ButtonTooltip>
+
+          {isMobile ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={(event) => onCommitAndPush(event.currentTarget)}
+                  disabled={!canCommit || isGeneratingMessage || networkOperationBlocked}
+                  className="h-7 w-7 p-0"
+                  aria-label={t('gitView.commit.pushAria')}
+                >
+                  {commitAction === 'commitAndPush' ? (
+                    <Icon name="loader-4" className="size-4 animate-spin" />
+                  ) : (
+                    <Icon name="arrow-up" className="size-3.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>{t('gitView.commit.push')}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <ButtonTooltip sideOffset={8} label={commitBlockedHint ?? t('contextTooltips.git.commitAndSync')}>
+              <Button
+                size="sm"
+                variant="default"
+                onClick={(event) => onCommitAndPush(event.currentTarget)}
+                disabled={!canCommit || isGeneratingMessage || networkOperationBlocked}
+                className="commit-actions__btn"
+                aria-label={t('gitView.commit.pushAria')}
+              >
+                {commitAction === 'commitAndPush' ? (
+                  <>
+                    <Icon name="loader-4" className="size-4 animate-spin" />
+                    <span className="commit-actions__label commit-actions__label--push">{t('gitView.commit.pushing')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon name="arrow-up" className="size-3.5" />
+                    <span className="commit-actions__label commit-actions__label--push">{t('gitView.commit.push')}</span>
+                  </>
+                )}
+              </Button>
+            </ButtonTooltip>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
