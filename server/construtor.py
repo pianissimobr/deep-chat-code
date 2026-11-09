@@ -6,8 +6,8 @@ Fluxo:
   1. Recebe o texto importante do DeepSeek (resposta da IA).
   2. Envia para um modelo via OpenRouter (ex: cohere/north-mini-code:free) com o
      contexto do projeto (arquivo .md gerado pelo tree-content-generator) pedindo
-     para escrever o código local e informar o comando para executá-lo.
-  3. Escreve o código num arquivo dentro do workspace da sessão.
+     para identificar a árvore, criar pastas/arquivos e informar o comando.
+  3. Escreve os arquivos num workspace com mkdir -p (cria pastas automaticamente).
   4. Executa o comando localmente (sandbox: apenas no diretório da sessão, sem rede,
      sem sudo, timeout rígido).
   5. Se der erro → envia o erro de volta ao DeepSeek (usuário copia a resposta do
@@ -109,17 +109,34 @@ Contexto do projeto (árvores de arquivos):
         + """
 
 INSTRUÇÕES:
-1. Escreva o código necessário para atender ao pedido do DeepSeek.
-2. Informe claramente o nome do arquivo a ser criado e o comando para executá-lo.
-3. Retorne APENAS um JSON válido com os campos:
-   - "arquivo": caminho relativo do arquivo a criar (ex: "main.py")
+Você precisa identificar duas coisas na resposta do DeepSeek:
+  A) A árvore/pastas que precisam ser criadas (ex: "src/utils", "src/views").
+  B) O código com nome do arquivo e onde ele deve ser colocado (ex: "src/utils/ajuda.py").
+
+1. Para cada arquivo de código que o DeepSeek manda, crie uma entrada no campo "arquivos".
+   Cada entrada tem:
+   - "arquivo": caminho relativo do arquivo a criar (ex: "src/utils/ajuda.py", "main.py")
    - "codigo": conteúdo completo do arquivo
-   - "comando": comando para executar (ex: "python3 main.py" ou "node app.js")
-   - "descricao": breve descrição do que o código faz
+   - "descricao": breve descrição do que o arquivo faz
+
+2. Informe "comando": o comando para executar (ex: "python3 src/utils/ajuda.py" ou "node app.js").
+   Use "python3" (não "python") para scripts Python.
+
+3. Retorne APENAS um JSON válido com os campos:
+   - "arquivos": lista de objetos {arquivo, codigo, descricao} — um por arquivo de código
+   - "comando": comando para executar (ex: "python3 main.py")
+   - "descricao": breve descrição geral do que o código faz
 
 Não inclua texto fora do JSON.
+
+Regras:
+- Pastas intermediárias são criadas automaticamente pelo executor (mkdir -p).
+- Se o DeepSeek manda apenas um arquivo, "arquivos" terá 1 item.
+- Se manda árvore com múltiplos arquivos, liste todos (cada um com caminho completo).
+- Nunca deixe "codigo" vazio; se não houver código, explique em "descricao".
 """
     )
+
 
 def chamar_openai(cliente, resposta_deepseek, contexto, modelo=DEFAULT_MODEL, tentativas=3):
     prompt = prompt_para_openai(resposta_deepseek, contexto)
@@ -138,12 +155,10 @@ def chamar_openai(cliente, resposta_deepseek, contexto, modelo=DEFAULT_MODEL, te
         if not texto:
             print(f"⚠️ Tentativa {tentativa + 1}/{tentativas}: resposta vazia do modelo, repetindo...")
             continue
-        # Remove possíveis marcadores de código ```json ... ```
         if texto.startswith("```"):
             texto = texto.split("```", 2)[1] if "```" in texto[3:] else texto
             if texto.startswith("json"):
                 texto = texto[4:].strip()
-        # Extrai o primeiro objeto JSON {...} se houver texto extra
         try:
             return json.loads(texto)
         except json.JSONDecodeError as e:
@@ -193,27 +208,55 @@ def executar_comando(workspace, comando, timeout=EXEC_TIMEOUT):
         return "", f"❌ Erro ao executar: {e}", 1
 
 
+def normalizar_plano(plano):
+    """Aceita tanto o novo formato {arquivos:[{arquivo,codigo,descricao}], comando, descricao}
+    quanto o legado {arquivo, codigo, comando, descricao}, retornando um dict uniforme."""
+    arquivos = []
+    if isinstance(plano.get("arquivos"), list):
+        for item in plano["arquivos"]:
+            if not isinstance(item, dict):
+                continue
+            arq = item.get("arquivo") or item.get("path") or ""
+            cod = item.get("codigo") or item.get("code") or item.get("content") or ""
+            desc = item.get("descricao") or item.get("description") or ""
+            if arq:
+                arquivos.append({"arquivo": arq, "codigo": cod, "descricao": desc})
+    if not arquivos:
+        arq = plano.get("arquivo") or plano.get("path") or ""
+        cod = plano.get("codigo") or plano.get("code") or plano.get("content") or plano.get("code_content") or ""
+        desc = plano.get("descricao") or plano.get("description") or ""
+        if arq:
+            arquivos.append({"arquivo": arq, "codigo": cod, "descricao": desc})
+    comando = plano.get("comando") or plano.get("command") or (f"python3 {arquivos[0]['arquivo']}" if arquivos else "python3 main.py")
+    descricao = plano.get("descricao") or plano.get("description") or ""
+    return {"arquivos": arquivos, "comando": comando, "descricao": descricao}
+
+
 def loop_construcao(cliente, resposta_inicial, contexto, workspace, modelo=DEFAULT_MODEL):
     resposta_atual = resposta_inicial
     for iteracao in range(1, MAX_ITERACOES + 1):
         print(f"\n🔄 Iteração {iteracao}/{MAX_ITERACOES} (modelo: {modelo})")
         try:
-            plano = chamar_openai(cliente, resposta_atual, contexto, modelo=modelo)
+            plano = normalizar_plano(chamar_openai(cliente, resposta_atual, contexto, modelo=modelo))
         except Exception as e:
             print(f"❌ Erro no OpenRouter: {e}")
             return False
 
-        arquivo = plano.get("arquivo", "main.py")
-        codigo = plano.get("codigo", "")
-        comando = plano.get("comando", f"python3 {arquivo}")
-        descricao = plano.get("descricao", "")
-
-        print(f"📝 Arquivo: {arquivo}")
-        print(f"📋 Descrição: {descricao}")
+        descricao_geral = plano.get("descricao", "")
+        comando = plano.get("comando", "python3 main.py")
+        print(f"📋 Descrição geral: {descricao_geral}")
         print(f"▶️ Comando: {comando}")
 
-        caminho = escrever_arquivo(workspace, arquivo, codigo)
-        print(f"💾 Escrito em: {caminho}")
+        for item in plano.get("arquivos", []):
+            arquivo = item.get("arquivo", "main.py")
+            codigo = item.get("codigo", "")
+            descricao = item.get("descricao", "")
+            print(f"📝 Arquivo: {arquivo} — {descricao}")
+            if not codigo:
+                print(f"⚠️ arquivo sem código, pulando escrita: {arquivo}")
+                continue
+            caminho = escrever_arquivo(workspace, arquivo, codigo)
+            print(f"💾 Escrito em: {caminho}")
 
         stdout, stderr, rc = executar_comando(workspace, comando)
         if stdout:
@@ -225,11 +268,12 @@ def loop_construcao(cliente, resposta_inicial, contexto, workspace, modelo=DEFAU
             print("✅ Execução concluída com sucesso!")
             return True
 
-        # Erro -> monta feedback para o DeepSeek
+        # Erro -> monta feedback para o DeepSeek (com os arquivos envolvidos)
         erro = stderr or stdout or "Erro desconhecido"
+        arquivos_afetados = ", ".join(item.get("arquivo", "?") for item in plano.get("arquivos", [])) or "(desconhecido)"
         resposta_atual = (
             f"O código gerado na iteração anterior falhou.\n"
-            f"Arquivo: {arquivo}\n"
+            f"Arquivos: {arquivos_afetados}\n"
             f"Comando: {comando}\n"
             f"Código de saída: {rc}\n"
             f"Erro:\n{erro}\n\n"
