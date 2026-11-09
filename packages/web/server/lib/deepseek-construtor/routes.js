@@ -37,6 +37,18 @@ const runPython = (script, args = [], timeoutMs = 300_000) => {
 };
 
 export const registerDeepSeekConstrutorRoutes = (app) => {
+  // CORS para o userscript Tampermonkey (GM_xmlhttpRequest já bypassa, mas
+  // deixamos liberado por robustez; é localhost mesmo).
+  app.use('/api/deepseek-construtor', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') {
+      res.status(204).end();
+      return;
+    }
+    next();
+  });
   // The base server only parses JSON for a whitelist of /api paths, so this
   // module parses its own body by reading the request stream directly.
   app.use('/api/deepseek-construtor', (req, res, next) => {
